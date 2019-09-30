@@ -5,7 +5,7 @@
 #include "mpc.h"
 
 /* Declare New lval Struct */
-typedef struct {
+typedef struct lval {
   int type;
   long num;
   char* err;
@@ -17,14 +17,12 @@ typedef struct {
 /* Create Enumeration of Possible lval Types */
 enum { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR };
 
-/* Create Enumeration of Possible Error Types */
-enum { LERR_DIV_ZERO, LERR_BAD_OP, LERR_BAD_NUM };
-
 /* Create a new number type lval */
 lval* lval_num(long x) {
   lval* v = malloc(sizeof(lval));
   v->type = LVAL_NUM;
   v->num = x;
+  v->count = 0;
   return v;
 }
 
@@ -34,6 +32,7 @@ lval* lval_err(char* x) {
   v->type = LVAL_ERR;
   v->err = malloc(strlen(x) + 1);
   strcpy(v->err, x);
+  v->count = 0;
   return v;
 }
 
@@ -43,6 +42,7 @@ lval* lval_sym(char* x) {
   v->type = LVAL_SYM;
   v->sym = malloc(strlen(x) + 1);
   strcpy(v->sym, x);
+  v->count = 0;
   return v;
 }
 
@@ -106,35 +106,6 @@ void lval_print(lval* v) {
 
 void lval_println(lval* v) { lval_print(v); putchar('\n'); }
 
-//lval* eval_op(lval* xval, char* op, lval* yval) {
-//  if (xval->type == LVAL_ERR) {
-//    return xval;
-//  }
-//  if (yval->type == LVAL_ERR) {
-//    return yval;
-//  }
-//
-//  long x = xval.num;
-//  long y = yval.num;
-//
-//  if (strcmp(op, "+") == 0) { return lval_num(x + y); }
-//  if (strcmp(op, "-") == 0) { return lval_num(x - y); }
-//  if (strcmp(op, "*") == 0) { return lval_num(x * y); }
-//  if (strcmp(op, "/") == 0) {
-//    if (y) {
-//      return lval_num(x / y);
-//    } else {
-//      return lval_err(LERR_DIV_ZERO);
-//    }
-//  }
-//  if (strcmp(op, "%") == 0) { return lval_num(x % y); }
-//  if (strcmp(op, "^") == 0) { return lval_num((int) pow((double) x, y)); }
-//  // if (strcmp(op, "m") == 0) { if (x <= y) { return x; } else { return y; }; }
-//
-//  // why is this useful ? Won't we have a parsing error in this case ?
-//  return lval_err(LERR_BAD_OP);
-//}
-//
 lval* lval_read(mpc_ast_t* t) {
   if (strstr(t->tag, "number")) {
     errno = 0;
@@ -156,17 +127,97 @@ lval* lval_read(mpc_ast_t* t) {
     return v;
   }
   return NULL;
+}
 
- // char* op = t->children[1]->contents;
+/* removes values from SExpr */
+lval* lval_pop(lval* v, int i) {
+  lval* result = v->cell[i];
 
- // lval* result = eval(t->children[2]);
- // int i = 3;
- // while (strstr(t->children[i]->tag, "expr")) {
- //   result = eval_op(result, op, eval(t->children[i]));
- //   i++;
- // }
+  memmove(&v->cell[i], &v->cell[i+1],
+  sizeof(lval*) * (v->count-i-1));
 
- // return result;
+  v->count--;
+
+  v->cell = realloc(v->cell, sizeof(lval*) * v->count);
+  return result;
+}
+
+/* take value from SExpr, and free SExpr */
+lval* lval_take(lval* v, int i) {
+  lval* result = lval_pop(v, i);
+  lval_del(v);
+  return result;
+}
+
+/* vx and vy must be of type LVAL_NUM */
+lval* eval_op(lval* vx, char* op, lval* vy) {
+  long x = vx->num;
+  long y = vy->num;
+  if (strcmp(op, "+") == 0) { return lval_num(x + y); }
+  if (strcmp(op, "-") == 0) { return lval_num(x - y); }
+  if (strcmp(op, "*") == 0) { return lval_num(x * y); }
+  if (strcmp(op, "/") == 0) {
+    if (y) {
+      return lval_num(x / y);
+    } else {
+      return lval_err("Division By Zero!");
+    }
+  }
+  if (strcmp(op, "%") == 0) { return lval_num(x % y); }
+  if (strcmp(op, "^") == 0) { return lval_num((int) pow((double) x, y)); }
+
+  // why is this useful ? Won't we have a parsing error in this case ?
+  return lval_err("Unknown operator");
+}
+
+lval* builtin_op(lval* a, char* op) {
+  for (int i = 0; i < a->count; i++) {
+    if (a->cell[i]->type != LVAL_NUM) {
+      lval_del(a);
+      return lval_err("Cannot operate on non-number!");
+    }
+  }
+  lval* result = lval_pop(a, 0);
+  if ((strcmp(op, "-") == 0) && a->count == 0) {
+    result->num = -result->num;
+  }
+
+  for (int i = 0; i < a->count; i++) {
+    result = eval_op(result, op, a->cell[i]);
+  }
+  lval_del(a);
+  return result;
+}
+
+lval* lval_eval_sexpr(lval* v) {
+  /* Evaluate children */
+  for (int i = 0; i < v->count; i++) {
+    v->cell[i] = lval_eval_sexpr(v->cell[i]);
+  }
+  for (int i = 0; i < v->count; i++) {
+    if (v->cell[i]->type == LVAL_ERR) {
+      return lval_take(v, i);
+    }
+  }
+
+  if (v->count == 0) {
+    return v;
+  }
+
+  if (v->count == 1) {
+      return lval_take(v, 0);
+  }
+  /* at this point, we have a valid expression with more than one expression */
+  lval* op = lval_pop(v, 0);
+  /* Check that it starts with an expression, and if not return an error */
+  if (op->type != LVAL_SYM) {
+    lval_del(op);
+    lval_del(v);
+    return lval_sym("S-expression does not start with symbol!");
+  }
+  lval* result = builtin_op(v, op->sym);
+  lval_del(op);
+  return result;
 }
 
 int main(int argc, char** argv) {
@@ -206,7 +257,7 @@ int main(int argc, char** argv) {
     mpc_result_t result;
     if (mpc_parse("<stdin>", input, Lispy, &result)) {
       mpc_ast_print(result.output);
-      lval* v = lval_read(result.output);
+      lval* v = lval_eval_sexpr(lval_read(result.output));
       lval_println(v);
       lval_del(v);
       mpc_ast_delete(result.output);

@@ -80,7 +80,7 @@ void lval_del(lval* v) {
 
 void lval_print(lval* v);
 
-void lval_expr_print(lval* v, char open, char close) {
+void lval_sexpr_print(lval* v, char open, char close) {
   putchar(open);
   for (int i = 0; i < v->count; i++) {
 
@@ -100,7 +100,7 @@ void lval_print(lval* v) {
     case LVAL_NUM:   printf("%li", v->num); break;
     case LVAL_ERR:   printf("Error: %s", v->err); break;
     case LVAL_SYM:   printf("%s", v->sym); break;
-    case LVAL_SEXPR: lval_expr_print(v, '(', ')'); break;
+    case LVAL_SEXPR: lval_sexpr_print(v, '(', ')'); break;
   }
 }
 
@@ -119,9 +119,9 @@ lval* lval_read(mpc_ast_t* t) {
     lval* v = lval_sexpr();
     for (int i = 0; i < t->children_num; i++) {
       mpc_ast_t* child = t->children[i];
-      if (strcmp(child->tag, "regex") == 0 || strcmp(child->contents, "(") == 0 || strcmp(child->contents, ")") == 0) {
-	continue;
-      }
+      if (strcmp(t->children[i]->contents, "(") == 0) { continue; }
+      if (strcmp(t->children[i]->contents, ")") == 0) { continue; }
+      if (strcmp(t->children[i]->tag,  "regex") == 0) { continue; }
       v = lval_add(v, lval_read(child));
     }
     return v;
@@ -220,6 +220,13 @@ lval* lval_eval_sexpr(lval* v) {
   return result;
 }
 
+lval* lval_eval(lval* v) {
+  /* Evaluate Sexpressions */
+  if (v->type == LVAL_SEXPR) { return lval_eval_sexpr(v); }
+  /* All other lval types remain the same */
+  return v;
+}
+
 int main(int argc, char** argv) {
   /* Create Some Parsers */
   mpc_parser_t* Number   = mpc_new("number");
@@ -257,7 +264,7 @@ int main(int argc, char** argv) {
     mpc_result_t result;
     if (mpc_parse("<stdin>", input, Lispy, &result)) {
       mpc_ast_print(result.output);
-      lval* v = lval_eval_sexpr(lval_read(result.output));
+      lval* v = lval_eval(lval_read(result.output));
       lval_println(v);
       lval_del(v);
       mpc_ast_delete(result.output);

@@ -7,3 +7,6 @@ Press Ctrl+c to Exit
 -100
 Error: Division By Zero!
 S-expression does not start with symbol!
+{1 2 3 4}
+{1 2 (+ 5 6) 4}
+{{2 3 4} {1}}

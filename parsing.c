@@ -205,10 +205,12 @@ lval* builtin_op(lval* a, char* op) {
   return result;
 }
 
+lval* lval_eval(lval* v);
+
 lval* lval_eval_expr(lval* v) {
   /* Evaluate children */
   for (int i = 0; i < v->count; i++) {
-    v->cell[i] = lval_eval_expr(v->cell[i]);
+    v->cell[i] = lval_eval(v->cell[i]);
   }
   for (int i = 0; i < v->count; i++) {
     if (v->cell[i]->type == LVAL_ERR) {
@@ -239,8 +241,6 @@ lval* lval_eval_expr(lval* v) {
 lval* lval_eval(lval* v) {
   /* Evaluate Sexpressions */
   if (v->type == LVAL_SEXPR) { return lval_eval_expr(v); }
-  if (v->type == LVAL_QEXPR) { return lval_eval_expr(v); }
-  /* All other lval types remain the same */
   return v;
 }
 
@@ -275,6 +275,10 @@ int main(int argc, char** argv) {
 
     /* Output our prompt and get input */
     char* input = readline("lispy> ");
+    if (strcmp(input, "q") == 0) {
+      free(input);
+      break;
+    }
 
     /* Add input to history */
     add_history(input);
@@ -282,8 +286,8 @@ int main(int argc, char** argv) {
     /* Attempt to Parse the user Input */
     mpc_result_t result;
     if (mpc_parse("<stdin>", input, Lispy, &result)) {
-      mpc_ast_print(result.output);
-      lval* v = lval_read(result.output);
+      // mpc_ast_print(result.output);
+      lval* v = lval_eval(lval_read(result.output));
       lval_println(v);
       lval_del(v);
       mpc_ast_delete(result.output);

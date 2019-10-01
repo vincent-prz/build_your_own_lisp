@@ -1,0 +1,9 @@
+Lispy Version 0.0.0.0.2
+Press Ctrl+c to Exit
+
+()
+4
+39
+-100
+Error: Division By Zero!
+S-expression does not start with symbol!

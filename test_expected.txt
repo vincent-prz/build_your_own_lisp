@@ -18,3 +18,13 @@ Error: Function 'tail' passed too many arguments!
 Error: Function 'tail' passed incorrect types!
 Error: Function 'tail' passed {}!
 {2}
+{1 2 3}
+{1 2 {3}}
+{}
+{1 2}
+{2}
+{1 (+ 5 6)}
+Error: Function 'join' passed incorrect type!
+3
+Error: Function 'eval' passed incorrect type!
+Error: Function 'eval' passed too many arguments!

@@ -208,6 +208,16 @@ lval* builtin_op(lval* a, char* op) {
   return result;
 }
 
+lval* builtin_list(lval* a) {
+  lval* result = lval_qexpr();
+  while(a->count > 0) {
+    lval_add(result, lval_pop(a, 0));
+  }
+  lval_del(a);
+  return result;
+}
+
+
 lval* builtin_head(lval* a) {
   LASSERT(a, (a->count == 1), "Function 'head' passed too many arguments!")
   LASSERT(a, (a->cell[0]->type == LVAL_QEXPR), "Function 'head' passed incorrect types!")
@@ -231,9 +241,50 @@ lval* builtin_tail(lval* a) {
   return qexpr;
 }
 
+lval* builtin_join(lval* a) {
+  for (int i = 0; i < a->count; i++) {
+    LASSERT(a, a->cell[i]->type == LVAL_QEXPR, "Function 'join' passed incorrect type!");
+  }
+  lval* result = lval_qexpr();
+  while(a->count > 0) {
+    lval* qexpr = lval_pop(a, 0);
+    while(qexpr->count > 0) {
+      lval_add(result, lval_pop(qexpr, 0));
+    }
+    lval_del(qexpr);
+  }
+  lval_del(a);
+  return result;
+}
+
 lval* lval_eval(lval* v);
 
-lval* lval_eval_expr(lval* v) {
+lval* builtin_eval(lval* a) {
+  LASSERT(a, (a->count == 1), "Function 'eval' passed too many arguments!")
+  LASSERT(a, (a->cell[0]->type == LVAL_QEXPR), "Function 'eval' passed incorrect type!")
+
+  lval* qexpr = lval_pop(a, 0);
+  lval* result = lval_sexpr();
+  while(qexpr->count > 0) {
+    lval_add(result, lval_pop(qexpr, 0));
+  }
+  lval_del(a);
+  lval_del(qexpr);
+  return lval_eval(result);
+}
+
+lval* builtin(lval* a, char* func) {
+  if (strcmp("list", func) == 0) { return builtin_list(a); }
+  if (strcmp("head", func) == 0) { return builtin_head(a); }
+  if (strcmp("tail", func) == 0) { return builtin_tail(a); }
+  if (strcmp("join", func) == 0) { return builtin_join(a); }
+  if (strcmp("eval", func) == 0) { return builtin_eval(a); }
+  if (strstr("+-/*", func)) { return builtin_op(a, func); }
+  lval_del(a);
+  return lval_err("Unknown Function!");
+}
+
+lval* lval_eval_sexpr(lval* v) {
   /* Evaluate children */
   for (int i = 0; i < v->count; i++) {
     v->cell[i] = lval_eval(v->cell[i]);
@@ -259,21 +310,14 @@ lval* lval_eval_expr(lval* v) {
     lval_del(v);
     return lval_sym("S-expression does not start with symbol!");
   }
-  lval* result = NULL;
-  if (strcmp(op->sym, "head") == 0) {
-    result = builtin_head(v);
-  } else if (strcmp(op->sym, "tail") == 0) {
-    result = builtin_tail(v);
-  } else {
-    result = builtin_op(v, op->sym);
-  }
+  lval* result = builtin(v, op->sym);
   lval_del(op);
   return result;
 }
 
 lval* lval_eval(lval* v) {
   /* Evaluate Sexpressions */
-  if (v->type == LVAL_SEXPR) { return lval_eval_expr(v); }
+  if (v->type == LVAL_SEXPR) { return lval_eval_sexpr(v); }
   return v;
 }
 

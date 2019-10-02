@@ -10,3 +10,11 @@ S-expression does not start with symbol!
 {1 2 3 4}
 {1 2 (+ 5 6) 4}
 {{2 3 4} {1}}
+Error: Function 'head' passed too many arguments!
+Error: Function 'head' passed incorrect types!
+Error: Function 'head' passed {}!
+{1}
+Error: Function 'tail' passed too many arguments!
+Error: Function 'tail' passed incorrect types!
+Error: Function 'tail' passed {}!
+{2}

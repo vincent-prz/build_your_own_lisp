@@ -205,6 +205,45 @@ lval* builtin_op(lval* a, char* op) {
   return result;
 }
 
+lval* builtin_head(lval* a) {
+  if (a->count != 1) {
+    lval_del(a);
+    return lval_err("Function 'head' passed too many arguments!");
+  }
+  if (a->cell[0]->type != LVAL_QEXPR) {
+    lval_del(a);
+    return lval_err("Function 'head' passed incorrect types!");
+  }
+  if (a->cell[0]->count == 0) {
+    lval_del(a);
+    return lval_err("Function 'head' passed {}!");
+  }
+  lval* qexpr = lval_take(a, 0);
+  while (qexpr->count > 1) {
+    lval_pop(qexpr, 1);
+  }
+  return qexpr;
+}
+
+lval* builtin_tail(lval* a) {
+  if (a->count != 1) {
+    lval_del(a);
+    return lval_err("Function 'tail' passed too many arguments!");
+  }
+  if (a->cell[0]->type != LVAL_QEXPR) {
+    lval_del(a);
+    return lval_err("Function 'tail' passed incorrect types!");
+  }
+  if (a->cell[0]->count == 0) {
+    lval_del(a);
+    return lval_err("Function 'tail' passed {}!");
+  }
+  lval* qexpr = lval_take(a, 0);
+  lval* head = lval_pop(qexpr, 0);
+  lval_del(head);
+  return qexpr;
+}
+
 lval* lval_eval(lval* v);
 
 lval* lval_eval_expr(lval* v) {
@@ -233,7 +272,14 @@ lval* lval_eval_expr(lval* v) {
     lval_del(v);
     return lval_sym("S-expression does not start with symbol!");
   }
-  lval* result = builtin_op(v, op->sym);
+  lval* result = NULL;
+  if (strcmp(op->sym, "head") == 0) {
+    result = builtin_head(v);
+  } else if (strcmp(op->sym, "tail") == 0) {
+    result = builtin_tail(v);
+  } else {
+    result = builtin_op(v, op->sym);
+  }
   lval_del(op);
   return result;
 }
@@ -257,7 +303,8 @@ int main(int argc, char** argv) {
   mpca_lang(MPCA_LANG_DEFAULT,
     "                                                     \
       number   : /-?[0-9]+/ ;                             \
-      symbol   : '+' | '-' | '*' | '/' | '%' | '^' ; \
+      symbol : \"list\" | \"head\" | \"tail\"                \
+	     | \"join\" | \"eval\" | '+' | '-' | '*' | '/' ; \
       sexpr    : '(' <expr>* ')' ;  \
       qexpr  : '{' <expr>* '}' ;                         \
       expr     : <number> | <symbol> | <sexpr> | <qexpr> ;  \

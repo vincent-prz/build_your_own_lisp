@@ -25,4 +25,9 @@ join {} 23
 eval {+ 1 2}
 eval 42
 eval {} {1}
+{head (list 1 2 3 4)}
+eval {head (list 1 2 3 4)}
+tail {tail tail tail}
+eval (tail {tail tail {5 6 7}})
+eval (head {(+ 1 2) (+ 10 20)})
 q

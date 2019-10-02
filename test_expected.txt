@@ -28,3 +28,8 @@ Error: Function 'join' passed incorrect type!
 3
 Error: Function 'eval' passed incorrect type!
 Error: Function 'eval' passed too many arguments!
+{head (list 1 2 3 4)}
+{1}
+{tail tail}
+{6 7}
+3

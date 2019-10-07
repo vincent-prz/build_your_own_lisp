@@ -39,4 +39,17 @@ def 1 1
 def {x y} 100
 def {x} 100 42
 def {1} 100
+# testcase assign 1 variable
+def {x} 100
+x
+# end testcase
+# testcase assign 2 variables
+def {x y} 1 2
+x
+y
+# end testcase
+# testcase assign a qexpr
+def {arglist} {a b x y}
+arglist
+# en testcase
 q

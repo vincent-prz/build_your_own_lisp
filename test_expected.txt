@@ -42,3 +42,10 @@ Error: Function 'def' should be supplied a QExpr as a first argument
 Error: Function 'def' should be supplied as much variable names as values to assign
 Error: Function 'def' should be supplied as much variable names as values to assign
 Error: Function 'def' should be supplied a QExpr with symbols as its children
+()
+100
+()
+1
+2
+()
+{a b x y}

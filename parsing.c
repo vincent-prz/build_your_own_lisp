@@ -528,9 +528,14 @@ int main(int argc, char** argv) {
 
     /* Output our prompt and get input */
     char* input = readline("lispy> ");
+    /* quit if given the letter 'q' */
     if (strcmp(input, "q") == 0) {
       free(input);
       break;
+    }
+    /* Comments TODO handle this properly in grammar */
+    if (strlen(input) > 0 && strstr(input, "#")) {
+      continue;
     }
 
     /* Add input to history */

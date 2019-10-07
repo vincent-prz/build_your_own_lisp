@@ -33,3 +33,7 @@ Error: Function 'eval' passed too many arguments!
 {tail tail}
 {6 7}
 3
+<function>
+<function>
+30
+Error: unbound symbol!

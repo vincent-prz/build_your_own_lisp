@@ -10,12 +10,12 @@ Error: first element is not a function
 {1 2 3 4}
 {1 2 (+ 5 6) 4}
 {{2 3 4} {1}}
-Error: Function 'head' passed too many arguments!
-Error: Function 'head' passed incorrect types!
+Error: Function 'head' passed too many arguments. Got 2, Expected 1.
+Error: Function 'head' passed incorrect types. Got Number, Expected Q-Expression.
 Error: Function 'head' passed {}!
 {1}
-Error: Function 'tail' passed too many arguments!
-Error: Function 'tail' passed incorrect types!
+Error: Function 'tail' passed too many arguments. Got 2, Expected 1.
+Error: Function 'tail' passed incorrect types. Got Number, Expected Q-Expression.
 Error: Function 'tail' passed {}!
 {2}
 {1 2 3}
@@ -36,7 +36,7 @@ Error: Function 'eval' passed too many arguments!
 <function>
 <function>
 30
-Error: unbound symbol!
+Error: Unbound Symbol hello
 Error: Function 'def' should be supplied at least 2 arguments
 Error: Function 'def' should be supplied a QExpr as a first argument
 Error: Function 'def' should be supplied as much variable names as values to assign

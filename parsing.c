@@ -345,6 +345,22 @@ lval* builtin_join(lenv* e, lval* a) {
   lval_del(a);
   return result;
 }
+lval* lenv_get(lenv* e, lval* k);
+void lenv_put(lenv* e, lval* k, lval* v);
+
+lval* builtin_def(lenv* e, lval* a) {
+  LASSERT(a, (a->count >= 2), "Function 'def' should be supplied at least 2 arguments")
+  LASSERT(a, (a->cell[0]->type == LVAL_QEXPR), "Function 'def' should be supplied a QExpr as a first argument")
+  LASSERT(a, (a->cell[0]->count == a->count - 1), "Function 'def' should be supplied as much variable names as values to assign")
+  for (int i = 0; i < a->cell[0]->count; i++) {
+    LASSERT(a, (a->cell[0]->cell[i]->type == LVAL_SYM), "Function 'def' should be supplied a QExpr with symbols as its children")
+  }
+  for (int i = 0; i < a->cell[0]->count; i++) {
+    lenv_put(e, a->cell[0]->cell[i], a->cell[i + 1]);
+  }
+  lval_del(a);
+  return lval_sexpr();
+}
 
 lval* lenv_get(lenv* e, lval* k) {
 
@@ -412,6 +428,9 @@ void lenv_add_builtins(lenv* e) {
   lenv_add_single_builtin(e, lval_sym("-"), lval_fun(&builtin_minus));
   lenv_add_single_builtin(e, lval_sym("*"), lval_fun(&builtin_times));
   lenv_add_single_builtin(e, lval_sym("/"), lval_fun(&builtin_div));
+
+  /* Other */
+  lenv_add_single_builtin(e, lval_sym("def"), lval_fun(&builtin_def));
 }
 
 lval* lval_eval_sexpr(lenv* e, lval* v) {

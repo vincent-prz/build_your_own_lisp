@@ -34,4 +34,9 @@ eval (head {(+ 1 2) (+ 10 20)})
 eval (head {+ - + - * /})
 (eval (head {+ - + - * /})) 10 20
 hello
+def {x}
+def 1 1
+def {x y} 100
+def {x} 100 42
+def {1} 100
 q

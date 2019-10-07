@@ -37,3 +37,8 @@ Error: Function 'eval' passed too many arguments!
 <function>
 30
 Error: unbound symbol!
+Error: Function 'def' should be supplied at least 2 arguments
+Error: Function 'def' should be supplied a QExpr as a first argument
+Error: Function 'def' should be supplied as much variable names as values to assign
+Error: Function 'def' should be supplied as much variable names as values to assign
+Error: Function 'def' should be supplied a QExpr with symbols as its children

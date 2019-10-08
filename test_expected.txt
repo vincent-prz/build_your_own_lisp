@@ -33,8 +33,8 @@ Error: Function 'eval' passed too many arguments!
 {tail tail}
 {6 7}
 3
-<function>
-<function>
+<builtin>
+<builtin>
 30
 Error: Unbound Symbol hello
 Error: Function 'def' should be supplied at least 2 arguments
@@ -49,3 +49,7 @@ Error: Function 'def' should be supplied a QExpr with symbols as its children
 2
 ()
 {a b x y}
+Error: Lambda passed incorrect number of arguments. Got 1, Expected 2.
+Error: Lambda definition got incorrect argument type at position 0. Got Number, Expected Q-Expression.
+Error: Lambda definition got incorrect argument type for formal argument 0. Got Number, Expected Symbol.
+(\ {x y} {+ x y})

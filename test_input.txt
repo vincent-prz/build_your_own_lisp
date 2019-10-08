@@ -52,4 +52,8 @@ y
 def {arglist} {a b x y}
 arglist
 # en testcase
+\ {x}
+\ 1 {}
+\ {1} {1}
+\ {x y} {+ x y}
 q

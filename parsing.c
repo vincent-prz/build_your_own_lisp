@@ -44,6 +44,7 @@ typedef struct lval {
 } lval;
 
 struct lenv {
+  lenv* par;
   int count;
   char** syms;
   lval** vals;
@@ -293,14 +294,13 @@ lval* lval_copy(lval* v) {
 
 lenv* lenv_copy(lenv* e) {
   lenv* x = malloc(sizeof(lenv));
+  x->par = e->par;
   x->count = e->count;
   x->syms = malloc(sizeof(char *) * x->count);
+  x->vals = malloc(sizeof(lval *) * x->count);
   for (int i = 0; i < x->count; i++) {
     x->syms[i] = malloc(strlen(e->syms[i]) + 1);
     strcpy(x->syms[i], e->syms[i]);
-  }
-  x->vals = malloc(sizeof(lval *) * x->count);
-  for (int i = 0; i < x->count; i++) {
     x->vals[i] = lval_copy(e->vals[i]);
   }
   return x;
@@ -447,8 +447,9 @@ lval* builtin_join(lenv* e, lval* a) {
 }
 lval* lenv_get(lenv* e, lval* k);
 void lenv_put(lenv* e, lval* k, lval* v);
+void lenv_def(lenv* e, lval* k, lval* v);
 
-lval* builtin_def(lenv* e, lval* a) {
+lval* builtin_var(lenv* e, lval* a, char* func) {
   LASSERT(a, (a->count >= 2), "Function 'def' should be supplied at least 2 arguments")
   LASSERT(a, (a->cell[0]->type == LVAL_QEXPR), "Function 'def' should be supplied a QExpr as a first argument")
   LASSERT(a, (a->cell[0]->count == a->count - 1), "Function 'def' should be supplied as much variable names as values to assign")
@@ -456,10 +457,22 @@ lval* builtin_def(lenv* e, lval* a) {
     LASSERT(a, (a->cell[0]->cell[i]->type == LVAL_SYM), "Function 'def' should be supplied a QExpr with symbols as its children")
   }
   for (int i = 0; i < a->cell[0]->count; i++) {
-    lenv_put(e, a->cell[0]->cell[i], a->cell[i + 1]);
+    if (strcmp(func, "def") == 0) {
+      lenv_def(e, a->cell[0]->cell[i], a->cell[i + 1]);
+    } else {
+      lenv_put(e, a->cell[0]->cell[i], a->cell[i + 1]);
+    }
   }
   lval_del(a);
   return lval_sexpr();
+}
+
+lval* builtin_def(lenv* e, lval* a) {
+  return builtin_var(e, a, "def");
+}
+
+lval* builtin_put(lenv* e, lval* a) {
+  return builtin_var(e, a, "=");
 }
 
 lval* builtin_lambda(lenv* e, lval* a) {
@@ -477,13 +490,17 @@ lval* builtin_lambda(lenv* e, lval* a) {
 
 lval* lenv_get(lenv* e, lval* k) {
 
-  /* Iterate over all items in environment */
-  for (int i = 0; i < e->count; i++) {
-    /* Check if the stored string matches the symbol string */
-    /* If it does, return a copy of the value */
-    if (strcmp(e->syms[i], k->sym) == 0) {
-      return lval_copy(e->vals[i]);
+  lenv* current_e = e;
+  while (current_e) {
+    /* Iterate over all items in environment */
+    for (int i = 0; i < e->count; i++) {
+      /* Check if the stored string matches the symbol string */
+      /* If it does, return a copy of the value */
+      if (strcmp(e->syms[i], k->sym) == 0) {
+	return lval_copy(e->vals[i]);
+      }
     }
+    current_e = current_e->par;
   }
   /* If no symbol found return error */
   return lval_err("Unbound Symbol %s", k->sym);
@@ -506,6 +523,12 @@ void lenv_put(lenv* e, lval* k, lval* v) {
   e->vals[e->count - 1] = lval_copy(v);
 }
 
+void lenv_def(lenv* e, lval* k, lval* v) {
+  /* Iterate till e has no parent */
+  while (e->par) { e = e->par; }
+  /* Put value in e */
+  lenv_put(e, k, v);
+}
 
 lval* lval_eval(lenv* e, lval* v);
 
@@ -544,7 +567,8 @@ void lenv_add_builtins(lenv* e) {
 
   /* Other */
   lenv_add_single_builtin(e, lval_sym("def"), lval_builtin(builtin_def));
-  lenv_add_single_builtin(e, lval_sym("\\"), lval_builtin(&builtin_lambda));
+  lenv_add_single_builtin(e, lval_sym("="), lval_builtin(builtin_put));
+  lenv_add_single_builtin(e, lval_sym("\\"), lval_builtin(builtin_lambda));
 }
 
 lval* lval_eval_sexpr(lenv* e, lval* v) {
@@ -591,6 +615,7 @@ lval* lval_eval(lenv* e, lval* v) {
 
 lenv* lenv_new(void) {
   lenv* e = malloc(sizeof(lenv));
+  e->par = NULL;
   e->count = 0;
   e->syms = NULL;
   e->vals = NULL;

@@ -53,3 +53,8 @@ Error: Lambda passed incorrect number of arguments. Got 1, Expected 2.
 Error: Lambda definition got incorrect argument type at position 0. Got Number, Expected Q-Expression.
 Error: Lambda definition got incorrect argument type for formal argument 0. Got Number, Expected Symbol.
 (\ {x y} {+ x y})
+3
+()
+43
+()
+3

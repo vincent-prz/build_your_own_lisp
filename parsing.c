@@ -493,11 +493,11 @@ lval* lenv_get(lenv* e, lval* k) {
   lenv* current_e = e;
   while (current_e) {
     /* Iterate over all items in environment */
-    for (int i = 0; i < e->count; i++) {
+    for (int i = 0; i < current_e->count; i++) {
       /* Check if the stored string matches the symbol string */
       /* If it does, return a copy of the value */
-      if (strcmp(e->syms[i], k->sym) == 0) {
-	return lval_copy(e->vals[i]);
+      if (strcmp(current_e->syms[i], k->sym) == 0) {
+	return lval_copy(current_e->vals[i]);
       }
     }
     current_e = current_e->par;
@@ -597,7 +597,23 @@ lval* lval_eval_sexpr(lenv* e, lval* v) {
     lval_del(v);
     return lval_err("first element is not a function");
   }
-  lval* result = f->builtin(e, v);
+  lval* result;
+  // apply builtin
+  if (f->builtin) {
+    result = f->builtin(e, v);
+  // apply lambda
+  } else {
+    // bind formals to arguments
+    lenv* lambda_e = lenv_new();
+    lambda_e->par = e;
+    for (int i = 0; i < f->formals->count; i++) {
+      lenv_put(lambda_e, f->formals->cell[i], v->cell[i]);
+    }
+    lval_del(v);
+    // evaluate body
+    result = builtin_eval(lambda_e, lval_add(lval_sexpr(), lval_copy(f->body)));
+    lenv_del(lambda_e);
+  }
   lval_del(f);
   return result;
 }

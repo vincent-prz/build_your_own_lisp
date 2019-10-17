@@ -56,4 +56,11 @@ arglist
 \ 1 {}
 \ {1} {1}
 \ {x y} {+ x y}
+(\ {x y} {+ x y}) 1 2
+# eval lambda with ref to outer scope
+def {global} 42
+(\ {x} {+ x global}) 1
+# eval lambda with shadowing
+def {shadow} 42
+(\ {x shadow} {+ x shadow}) 1 2
 q

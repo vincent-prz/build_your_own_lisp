@@ -219,6 +219,15 @@ void lval_print(lval* v) {
 
 void lval_println(lval* v) { lval_print(v); putchar('\n'); }
 
+void lenv_print(lenv* e) {
+  for (int i = 0; i < e->count; i++) {
+    printf("%s -> ", e->syms[i]);
+    lval_println(e->vals[i]);
+  }
+}
+
+void lenv_println(lenv* e) { lenv_print(e); putchar('\n'); }
+
 lval* lval_read(mpc_ast_t* t) {
   if (strstr(t->tag, "number")) {
     errno = 0;
@@ -262,6 +271,7 @@ lval* lval_copy(lval* v) {
 	x->builtin = v->builtin;
       }
       else {
+	x->builtin = NULL;
 	x->env = lenv_copy(v->env);
 	x->formals = lval_copy(v->formals);
 	x->body = lval_copy(v->body);
@@ -450,11 +460,11 @@ void lenv_put(lenv* e, lval* k, lval* v);
 void lenv_def(lenv* e, lval* k, lval* v);
 
 lval* builtin_var(lenv* e, lval* a, char* func) {
-  LASSERT(a, (a->count >= 2), "Function 'def' should be supplied at least 2 arguments")
-  LASSERT(a, (a->cell[0]->type == LVAL_QEXPR), "Function 'def' should be supplied a QExpr as a first argument")
-  LASSERT(a, (a->cell[0]->count == a->count - 1), "Function 'def' should be supplied as much variable names as values to assign")
+  LASSERT(a, (a->count >= 2), "Function '%s' should be supplied at least 2 arguments", func)
+  LASSERT(a, (a->cell[0]->type == LVAL_QEXPR), "Function '%s' should be supplied a QExpr as a first argument", func)
+  LASSERT(a, (a->cell[0]->count == a->count - 1), "Function '%s' should be supplied as much variable names as values to assign", func)
   for (int i = 0; i < a->cell[0]->count; i++) {
-    LASSERT(a, (a->cell[0]->cell[i]->type == LVAL_SYM), "Function 'def' should be supplied a QExpr with symbols as its children")
+    LASSERT(a, (a->cell[0]->cell[i]->type == LVAL_SYM), "Function '%s' should be supplied a QExpr with symbols as its children", func)
   }
   for (int i = 0; i < a->cell[0]->count; i++) {
     if (strcmp(func, "def") == 0) {
@@ -692,13 +702,17 @@ int main(int argc, char** argv) {
       free(input);
       break;
     }
+    /* Add input to history */
+    add_history(input);
+
     /* Comments TODO handle this properly in grammar */
     if (strlen(input) > 0 && strstr(input, "#")) {
       continue;
     }
-
-    /* Add input to history */
-    add_history(input);
+    if (strcmp(input, "printenv") == 0) {
+      lenv_println(e);
+      continue;
+    }
 
     /* Attempt to Parse the user Input */
     mpc_result_t result;

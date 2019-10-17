@@ -63,4 +63,7 @@ def {global} 42
 # eval lambda with shadowing
 def {shadow} 42
 (\ {x shadow} {+ x shadow}) 1 2
+# named function
+def {fu} (\ {x} {+ x 1})
+fu 1
 q

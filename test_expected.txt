@@ -58,3 +58,5 @@ Error: Lambda definition got incorrect argument type for formal argument 0. Got 
 43
 ()
 3
+()
+2

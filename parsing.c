@@ -581,6 +581,7 @@ void lenv_add_builtins(lenv* e) {
   lenv_add_single_builtin(e, lval_sym("\\"), lval_builtin(builtin_lambda));
 }
 
+// TODO implement currying
 lval* lval_call(lenv* e, lval* f, lval* v) {
   // apply builtin
   if (f->builtin) {

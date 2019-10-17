@@ -571,6 +571,26 @@ void lenv_add_builtins(lenv* e) {
   lenv_add_single_builtin(e, lval_sym("\\"), lval_builtin(builtin_lambda));
 }
 
+lval* lval_call(lenv* e, lval* f, lval* v) {
+  // apply builtin
+  if (f->builtin) {
+    return f->builtin(e, v);
+  }
+  // apply lambda
+  lval* result;
+  // bind formals to arguments
+  lenv* lambda_e = lenv_new();
+  lambda_e->par = e;
+  for (int i = 0; i < f->formals->count; i++) {
+    lenv_put(lambda_e, f->formals->cell[i], v->cell[i]);
+  }
+  lval_del(v);
+  // evaluate body
+  result = builtin_eval(lambda_e, lval_add(lval_sexpr(), lval_copy(f->body)));
+  lenv_del(lambda_e);
+  return result;
+}
+
 lval* lval_eval_sexpr(lenv* e, lval* v) {
   /* Evaluate children */
   for (int i = 0; i < v->count; i++) {
@@ -597,23 +617,7 @@ lval* lval_eval_sexpr(lenv* e, lval* v) {
     lval_del(v);
     return lval_err("first element is not a function");
   }
-  lval* result;
-  // apply builtin
-  if (f->builtin) {
-    result = f->builtin(e, v);
-  // apply lambda
-  } else {
-    // bind formals to arguments
-    lenv* lambda_e = lenv_new();
-    lambda_e->par = e;
-    for (int i = 0; i < f->formals->count; i++) {
-      lenv_put(lambda_e, f->formals->cell[i], v->cell[i]);
-    }
-    lval_del(v);
-    // evaluate body
-    result = builtin_eval(lambda_e, lval_add(lval_sexpr(), lval_copy(f->body)));
-    lenv_del(lambda_e);
-  }
+  lval* result = lval_call(e, f, v);
   lval_del(f);
   return result;
 }

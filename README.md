@@ -2,6 +2,10 @@
 
 This repository contains the code I built while [this book](http://buildyourownlisp.com/). While this code is obviously very similar to the code which can be found in the book, it contains some minor differences since I wrote the code myself, instead of copying the samples from the book <sup>1</sup>. As a result, there currently are some bugs and memory leaks, which I need to fix :). My main goal was to educate myself on programming languages implementations.
 
+## Usage
+
+Just build the REPL via `make`, and launch the `lispy` executable.
+
 ## Features
 
 The code currently covers roughly the language features described until chapter 12. Namely, its consists in a REPL which can do the following things:
